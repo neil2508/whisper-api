@@ -15,19 +15,25 @@ def transcribe():
 
     try:
         # Save uploaded file to a temporary location
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
             audio_file.save(temp_file)
             temp_file_path = temp_file.name
 
-        # Open the file in binary read mode and send to OpenAI
+        # Transcribe using OpenAI Whisper
         with open(temp_file_path, "rb") as f:
             transcript = client.audio.transcriptions.create(
                 model="whisper-1",
                 file=f
             )
+
         return jsonify({'transcription': transcript.text})
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+    finally:
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
 
 @app.route('/', methods=['GET'])
 def home():
